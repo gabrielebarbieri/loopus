@@ -1,5 +1,6 @@
 import mido
-from loopus.link_loop import LinkLoop
+from loopus.link_loop import link_loop
+from itertools import cycle
 
 
 class Note(object):
@@ -36,17 +37,35 @@ class Note(object):
             note.release()
 
 
-class Player(LinkLoop):
+def play_note(beat, pitch, dur=1.0, vel=100, channel=0):
+    note = Note(pitch, channel=channel)
+    link_loop.schedule(beat, note.play, vel)
+    link_loop.schedule(beat + dur, note.release)
 
-    def play_note(self, beat, pitch, dur=1.0, vel=100, channel=0):
-        note = Note(pitch, channel=channel)
-        self.schedule(beat, note.play, vel)
-        self.schedule(beat + dur, note.release)
 
-    def play_sequence(self, beat, pitches):
-        if pitches:
-            self.play_note(beat, pitches[0])
-            if len(pitches) > 1:
-                self.schedule(beat, self.play_sequence, beat + 1, pitches[1:])
-            else:
-                self.schedule(beat, self.play_sequence, beat + 1, pitches)
+class Player(object):
+
+    def __init__(self, p, dur=None, sus=None, channel=0):
+        self.channel = channel
+        self.pitches = cycle(p)
+        self.durations = cycle(dur if dur else [1])
+        self.sustains = cycle(sus if sus else self.durations)
+        self.play_sequence(self.pitches, self.durations, self.sustains)
+
+    def play_sequence(self, pitches, durations, sustains, beat=None):
+
+        if beat is None:
+            beat = link_loop.next_bar
+        if pitches and durations:
+            dur = next(durations)
+            play_note(beat, next(pitches), dur=next(sustains), channel=self.channel)
+            link_loop.schedule(beat, self.play_sequence, pitches, durations, sustains, beat + dur)
+
+
+if __name__ == '__main__':
+    Player([67, 62, 62], dur=[1, 0.5, 0.5], sus=[0.1])
+    try:
+        import time
+        time.sleep(100)
+    finally:
+        Note.release_all()

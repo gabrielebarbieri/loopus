@@ -20,6 +20,7 @@ class LinkLoop(object):
         self.heap_queue = []
         self.scheduled_events = {}
         self.sleeping_time = 0.0001
+        self.latencies = []
 
     @property
     def beat(self):
@@ -43,12 +44,13 @@ class LinkLoop(object):
         while True:
             if self.heap_queue:
                 beat = self.heap_queue[0]
-                current_beat = self.beat
-                if current_beat >= beat:
+                latency = self.beat - beat
+                if latency >= 0:
                     for f in self.scheduled_events[beat]:
                         f()
-                        logging.debug(log_format.format(beat=beat, event=f.__name__, latency=current_beat - beat))
+                        logging.debug(log_format.format(beat=beat, event=f.__name__, latency=latency))
                     heappop(self.heap_queue)
+                    self.latencies.append(latency)
             gevent.sleep(self.sleeping_time)
 
     def schedule(self, beat, f, *args, **kwargs):
@@ -63,3 +65,7 @@ class LinkLoop(object):
 
     def schedule_at_next_bar(self, f, *args, **kwargs):
         self.schedule(self.next_bar, f, *args, **kwargs)
+
+
+link_loop = LinkLoop()
+link_loop.run()
