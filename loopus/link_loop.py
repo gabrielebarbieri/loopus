@@ -40,7 +40,6 @@ class LinkLoop(object):
         return gevent.spawn(self._run)
 
     def _run(self):
-        log_format = ' | beat {beat:>8.4f} | latency {latency:.6f} | event: {event:<10}'
         while True:
             if self.heap_queue:
                 beat = self.heap_queue[0]
@@ -48,7 +47,7 @@ class LinkLoop(object):
                 if latency >= 0:
                     for f in self.scheduled_events[beat]:
                         f()
-                        logging.debug(log_format.format(beat=beat, event=f.__name__, latency=latency))
+                        logging.debug(f' | beat {beat:>8.4f} | latency {latency:.6f} | event: {f.__name__:<10}')
                     heappop(self.heap_queue)
                     self.latencies.append(latency)
             gevent.sleep(self.sleeping_time)
