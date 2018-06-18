@@ -1,5 +1,5 @@
-from gevent import monkey; monkey.patch_all()
-import gevent
+from threading import Thread
+import asyncio
 from heapq import heappop, heappush
 from abletonlink import Link
 import functools
@@ -21,6 +21,7 @@ class LinkLoop(object):
         self.scheduled_events = {}
         self.sleeping_time = 0.0001
         self.latencies = []
+        self.running = False
 
     @property
     def beat(self):
@@ -37,10 +38,21 @@ class LinkLoop(object):
         return fmod(beat, self.quantum)
 
     def run(self):
-        return gevent.spawn(self._run)
+        new_loop = asyncio.new_event_loop()
+        t = Thread(target=self.start_loop, args=(new_loop,))
+        t.start()
+        return t
 
-    def _run(self):
-        while True:
+    def start_loop(self, loop):
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self._async_run())
+
+    def stop(self):
+        self.running = False
+
+    async def _async_run(self):
+        self.running = True
+        while self.running:
             if self.heap_queue:
                 beat = self.heap_queue[0]
                 latency = self.beat - beat
@@ -50,7 +62,7 @@ class LinkLoop(object):
                         logging.debug(f' | beat {beat:>8.4f} | latency {latency:.6f} | event: {f.__name__:<10}')
                     heappop(self.heap_queue)
                     self.latencies.append(latency)
-            gevent.sleep(self.sleeping_time)
+            asyncio.sleep(self.sleeping_time)
 
     def schedule(self, beat, f, *args, **kwargs):
 
