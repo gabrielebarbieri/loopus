@@ -1,6 +1,6 @@
 from threading import Thread
 import asyncio
-from heapq import heappop, heappush
+from queue import PriorityQueue
 from abletonlink import Link
 import functools
 import logging
@@ -17,7 +17,7 @@ class LinkLoop(object):
         self.quantum = quantum
         self.link.enable(True)
         self.clock = self.link.clock()
-        self.heap_queue = []
+        self.q = PriorityQueue()
         self.scheduled_events = {}
         self.sleeping_time = 0.0001
         self.latencies = []
@@ -53,14 +53,15 @@ class LinkLoop(object):
     async def _async_run(self):
         self.running = True
         while self.running:
-            if self.heap_queue:
-                beat = self.heap_queue[0]
+            if self.q.queue:
+                beat = self.q.queue[0]
                 latency = self.beat - beat
                 if latency >= 0:
                     for f in self.scheduled_events[beat]:
                         f()
                         logging.debug(f' | beat {beat:>8.4f} | latency {latency:.6f} | event: {f.__name__:<10}')
-                    heappop(self.heap_queue)
+                    # heappop(self.heap_queue)
+                    self.q.get(block=False)
                     self.latencies.append(latency)
             asyncio.sleep(self.sleeping_time)
 
@@ -71,7 +72,7 @@ class LinkLoop(object):
         try:
             self.scheduled_events[beat].append(partial_f)
         except KeyError:
-            heappush(self.heap_queue, beat)
+            self.q.put(beat)
             self.scheduled_events[beat] = [partial_f]
 
     def schedule_at_next_bar(self, f, *args, **kwargs):
