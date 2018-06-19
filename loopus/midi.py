@@ -2,6 +2,7 @@ import mido
 from loopus.link_loop import link_loop
 from itertools import cycle
 import signal
+import sys
 
 
 class Note(object):
@@ -51,23 +52,22 @@ class Player(object):
         self.pitches = cycle(p)
         self.durations = cycle(dur if dur else [1])
         self.sustains = cycle(sus if sus else self.durations)
+        self.running = False
         self.play_sequence(self.pitches, self.durations, self.sustains)
 
-    def play_sequence(self, pitches, durations, sustains, beat=None):
+    def play_sequence(self, pitches, durations, sustains):
+        self.running = True
+        beat = link_loop.next_bar
+        link_loop.schedule(beat, self.loop_sequence, pitches, durations, sustains, beat)
 
-        if beat is None:
-            beat = link_loop.next_bar
-        if pitches and durations:
+    def stop_sequence(self):
+        self.running = False
+
+    def loop_sequence(self, pitches, durations, sustains, beat):
+        if self.running:
             dur = next(durations)
             play_note(beat, next(pitches), dur=next(sustains), channel=self.channel)
-            link_loop.schedule(beat, self.play_sequence, pitches, durations, sustains, beat + dur)
-
-
-def handle_exit(s, frame):
-    link_loop.stop()
-
-
-signal.signal(signal.SIGINT, handle_exit)
+            link_loop.schedule(beat, self.loop_sequence, pitches, durations, sustains, beat + dur)
 
 
 if __name__ == '__main__':
