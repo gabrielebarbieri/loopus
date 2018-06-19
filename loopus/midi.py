@@ -1,6 +1,7 @@
 import mido
 from loopus.link_loop import link_loop
 from itertools import cycle
+import signal
 
 
 class Note(object):
@@ -62,10 +63,12 @@ class Player(object):
             link_loop.schedule(beat, self.play_sequence, pitches, durations, sustains, beat + dur)
 
 
+def handle_exit(s, frame):
+    link_loop.stop()
+
+
+signal.signal(signal.SIGINT, handle_exit)
+
+
 if __name__ == '__main__':
     Player([67, 62, 62], dur=[1, 0.5, 0.5], sus=[0.1])
-    try:
-        import time
-        time.sleep(100)
-    finally:
-        Note.release_all()

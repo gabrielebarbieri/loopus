@@ -5,6 +5,7 @@ from abletonlink import Link
 import functools
 import logging
 from math import fmod
+import signal
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -81,3 +82,10 @@ class LinkLoop(object):
 
 link_loop = LinkLoop()
 link_loop.run()
+
+
+def handle_exit(s, frame):
+    link_loop.stop()
+
+
+signal.signal(signal.SIGINT, handle_exit)
