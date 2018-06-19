@@ -1,0 +1,2 @@
+mido
+-e git+git@github.com:gabrielebarbieri/abletonlink.git#egg=abletonlink

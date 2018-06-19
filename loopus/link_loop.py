@@ -8,7 +8,7 @@ from math import fmod
 import signal
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 
 class LinkLoop(object):
