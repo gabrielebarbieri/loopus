@@ -1,8 +1,6 @@
 import mido
 from loopus.link_loop import link_loop
 from itertools import cycle
-import signal
-import sys
 
 
 class Note(object):
