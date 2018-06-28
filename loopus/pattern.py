@@ -28,6 +28,8 @@ def recursive_cycle(iterable):
 class Pattern(object):
 
     def __init__(self, pattern):
+        if not isinstance(pattern, list):
+            pattern = [pattern]
         self.pattern = recursive_cycle(pattern)
 
     # def __iter__(self):
@@ -37,6 +39,7 @@ class Pattern(object):
         return next(self.pattern)
 
 
-p = Pattern([1, 2, 2])
-for _ in range(10):
-    print(next(p))
+if __name__ == '__main__':
+    p = Pattern([1, 2, 2])
+    for _ in range(10):
+        print(next(p))
