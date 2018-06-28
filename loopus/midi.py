@@ -1,5 +1,5 @@
 import mido
-from loopus.link_loop import link_loop
+from loopus.clock import clock
 from itertools import cycle
 
 
@@ -39,8 +39,8 @@ class Note(object):
 
 def play_note(beat, pitch, dur=1.0, vel=100, channel=0):
     note = Note(pitch, channel=channel)
-    link_loop.schedule(beat, note.play, vel)
-    link_loop.schedule(beat + dur, note.release)
+    clock.schedule(beat, note.play, vel)
+    clock.schedule(beat + dur, note.release)
 
 
 class Player(object):
@@ -55,8 +55,8 @@ class Player(object):
 
     def play_sequence(self, pitches, durations, sustains):
         self.running = True
-        beat = link_loop.next_bar
-        link_loop.schedule(beat, self.loop_sequence, pitches, durations, sustains, beat)
+        beat = clock.next_bar
+        clock.schedule(beat, self.loop_sequence, pitches, durations, sustains, beat)
 
     def stop_sequence(self):
         self.running = False
@@ -65,7 +65,7 @@ class Player(object):
         if self.running:
             dur = next(durations)
             play_note(beat, next(pitches), dur=next(sustains), channel=self.channel)
-            link_loop.schedule(beat, self.loop_sequence, pitches, durations, sustains, beat + dur)
+            clock.schedule(beat, self.loop_sequence, pitches, durations, sustains, beat + dur)
 
 
 if __name__ == '__main__':

@@ -3,13 +3,10 @@ import asyncio
 from queue import PriorityQueue
 from abletonlink import Link
 import functools
-import logging
 from math import fmod
 
-logger = logging.getLogger()
 
-
-class LinkLoop(object):
+class Clock(object):
 
     def __init__(self, bpm=120, quantum=4):
         self.link = Link(bpm)
@@ -77,5 +74,5 @@ class LinkLoop(object):
         self.schedule(self.next_bar, f, *args, **kwargs)
 
 
-link_loop = LinkLoop()
-link_loop.run()
+clock = Clock()
+clock.run()

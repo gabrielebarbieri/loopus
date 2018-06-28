@@ -1,10 +1,11 @@
-from loopus.link_loop import link_loop
+from loopus.clock import clock
 from loopus.midi import Player, Note
 import signal
 
+
 def handle_exit(s, frame):
     Note.release_all()
-    link_loop.stop()
+    clock.stop()
     import sys
     sys.exit(0)
 
