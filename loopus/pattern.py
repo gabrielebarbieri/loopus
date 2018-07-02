@@ -28,15 +28,17 @@ def recursive_cycle(iterable):
 class Pattern(object):
 
     def __init__(self, pattern):
-        if not isinstance(pattern, list):
-            pattern = [pattern]
-        self.pattern = recursive_cycle(pattern)
+        self.pattern = pattern if isinstance(pattern, list) else [pattern]
+        self.cycle = recursive_cycle(self.pattern)
 
     # def __iter__(self):
     #     return self
 
     def __next__(self):
-        return next(self.pattern)
+        return next(self.cycle)
+
+    def clone(self):
+        return Pattern(self.pattern)
 
 
 if __name__ == '__main__':

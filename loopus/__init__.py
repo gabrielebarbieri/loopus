@@ -1,5 +1,6 @@
 from loopus.clock import clock
-from loopus.midi import Player, Note
+from loopus.midi import Note
+from loopus.player import Player
 import signal
 
 
