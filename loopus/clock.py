@@ -33,7 +33,7 @@ class Clock(object):
     def get_phase(self, beat):
         return fmod(beat, self.quantum)
 
-    def run(self):
+    def start(self):
         new_loop = asyncio.new_event_loop()
         t = Thread(target=self.start_loop, args=(new_loop,))
         t.start()
@@ -72,7 +72,3 @@ class Clock(object):
 
     def schedule_at_next_bar(self, f, *args, **kwargs):
         self.schedule(self.next_bar, f, *args, **kwargs)
-
-
-clock = Clock()
-clock.run()

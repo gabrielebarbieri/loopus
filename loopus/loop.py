@@ -1,23 +1,20 @@
 from loopus.pattern import Pattern
-from loopus.clock import clock
 
 
 class Loop(object):
 
     compensation = 0.1
 
-    def __init__(self, durations, actions, *params):
+    def __init__(self, clock, durations, actions, *params):
         self.durations = Pattern(durations)
         self.actions = Pattern(actions)
         self.parameters = [Pattern(p) for p in params]
         self.running = False
         self.clock = clock
-        self.play()
 
     def play(self):
         self.running = True
         beat = self.clock.next_bar
-        print(beat)
         self.loop(beat)
 
     def stop(self):

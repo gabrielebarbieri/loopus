@@ -30,9 +30,6 @@ class Scale(object):
         return self.lower_pitches[item]
 
 
-default = Scale()
-
-
 def print_available_scales():
     import re
     for name in dir(scale):
