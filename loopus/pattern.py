@@ -39,9 +39,3 @@ class Pattern(object):
 
     def clone(self):
         return Pattern(self.pattern)
-
-
-if __name__ == '__main__':
-    p = Pattern([1, 2, 2])
-    for _ in range(10):
-        print(next(p))
