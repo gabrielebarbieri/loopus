@@ -1,4 +1,6 @@
-# from loopus.loopus import Loopus
+from loopus.pattern import P, Pattern
+
+
 # import signal
 #
 #
@@ -14,4 +16,4 @@
 # signal.signal(signal.SIGINT, handle_exit)
 #
 #
-# __ALL__ = [loopus]
+__ALL__ = [P, Pattern]

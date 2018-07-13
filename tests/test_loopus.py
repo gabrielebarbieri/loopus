@@ -1,5 +1,5 @@
 import unittest
-from loopus.pattern import Pattern, P
+from loopus import Pattern, P
 
 
 class TestPattern(unittest.TestCase):
@@ -24,3 +24,9 @@ class TestPattern(unittest.TestCase):
         res = [next(p) for _ in range(10)]
         assert res == [1, 'A', 1, 'A', 1, 'A', 1, 'A', 1, 'A']
         assert isinstance(p, Pattern)
+
+    # def test_pattern_sum(self):
+    #     p = P[0, 1, 2]
+    #     s = p + 2
+    #     print(s)
+    #     pass
