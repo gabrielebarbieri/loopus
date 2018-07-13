@@ -31,11 +31,23 @@ class Pattern(object):
         self.pattern = pattern if isinstance(pattern, list) else [pattern]
         self.cycle = recursive_cycle(self.pattern)
 
-    # def __iter__(self):
-    #     return self
-
     def __next__(self):
-        return next(self.cycle)
+        n = next(self.cycle)
+        return n
 
     def clone(self):
         return Pattern(self.pattern)
+
+    def __repr__(self):
+        return f'P{self.pattern}'
+
+
+class PatternFactory(object):
+
+    def __getitem__(self, item):
+        if isinstance(item, tuple):
+            item = list(item)
+        return Pattern(item)
+
+
+P = PatternFactory()
