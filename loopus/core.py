@@ -20,7 +20,7 @@ class Loopus(object):
 
     def play(self, name, p, dur, sus):
         self.stop(name)
-        p = Player(self.clock, p, dur=dur, sus=sus)
+        p = Player(self.clock, self.scale, p, dur=dur, sus=sus)
         p.play()
         self.loops[name] = p
 
@@ -31,14 +31,13 @@ class Loopus(object):
             try:
                 self.loops[name].stop()
             except KeyError:
-                print(f'Player {name} does not exist')
                 pass
 
 
 if __name__ == '__main__':
     l = Loopus()
     l.start()
-    l.play('a', [67, 62, 62], dur=[0.5, 0.25, 0.25], sus=[0.25])
+    l.play('a', [0, 4, 2], dur=[0.5, 0.25, 0.25], sus=[0.25])
     from time import sleep
     sleep(5)
     l.stop()
