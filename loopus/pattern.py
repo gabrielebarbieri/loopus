@@ -1,3 +1,6 @@
+from abc import ABC, abstractmethod
+
+
 def recursive_cycle(iterable):
     """
     recursive cycle in case of nested list:
@@ -16,7 +19,6 @@ def recursive_cycle(iterable):
         else:
             yield element
             saved.append(element)
-
     while saved:
         for element in saved:
             try:
@@ -25,12 +27,16 @@ def recursive_cycle(iterable):
                 yield element
 
 
-class AbstractPattern(object):
+class AbstractPattern(ABC):
 
     def __add__(self, other):
         if not isinstance(other, AbstractPattern):
             other = Pattern(other)
         return PatternOperation(self, other, lambda x, y: x+y)
+
+    @abstractmethod
+    def __next__(self):
+        pass
 
     def __radd__(self, other):
         return self + other
@@ -75,3 +81,7 @@ class PatternFactory(object):
 
 
 P = PatternFactory()
+
+if __name__ == '__main__':
+    p = P[0, (1, 2), {1, 3}]
+    print([next(p) for _ in range(10)])
