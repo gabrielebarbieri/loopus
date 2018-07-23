@@ -17,7 +17,9 @@ def visitor(pattern):
             for element in visitor(child):
                 yield element
     elif isinstance(pattern, cycle):
-        yield next(pattern)
+        child = next(pattern)
+        for element in visitor(child):
+            yield element
     else:
         yield pattern
 
@@ -28,8 +30,8 @@ def recursive_cycle(pattern):
             yield e
 
 if __name__ == '__main__':
-    o = cycle([3, 4])
-    p = [0, [cycle([1, o]), 7, 8, 9]]
+    o = cycle([1, 2])
+    p = cycle([0, o, [3, 4]])
     c = recursive_cycle(p)
-    for _ in xrange(100):
+    for _ in xrange(10):
         print next(c)
