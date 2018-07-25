@@ -21,7 +21,7 @@ def parse(sequence):
                 stack[-1].append(tuple(e))
         else:
             stack[-1].append(s)
-    return result
+    return tuple(result)
 
 
 print(parse('X-[s(tu)z]-'))
