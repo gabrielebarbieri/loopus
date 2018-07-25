@@ -1,30 +1,35 @@
 from abc import ABC, abstractmethod
+from itertools import cycle
 
 
-def recursive_cycle(iterable):
-    """
-    recursive cycle in case of nested list:
-    [A, B] -> A B A B ...
-    [A, [1, 2]] -> A 1 A 2 A 1 A 2 ...
-    [(1, 2), A] -> (1, 2) A (1, 2) A ...
-    :param iterable:
-    :return:
-    """
-    saved = []
-    for element in iterable:
-        if isinstance(element, list):
-            p = recursive_cycle(element)
-            yield next(p)
-            saved.append(p)
-        else:
-            yield element
-            saved.append(element)
-    while saved:
-        for element in saved:
-            try:
-                yield next(element)
-            except TypeError:
+def xtraverse(pattern):
+
+    if isinstance(pattern, tuple):
+        for child in pattern:
+            for element in xtraverse(child):
                 yield element
+    elif isinstance(pattern, cycle):
+        child = next(pattern)
+        for element in xtraverse(child):
+            yield element
+    else:
+        yield pattern
+
+
+def parse(pattern):
+    if isinstance(pattern, list):
+        return cycle(parse(e) for e in pattern)
+    elif isinstance(pattern, tuple):
+        return tuple(parse(e) for e in pattern)
+    else:
+        return pattern
+
+
+def recursive_cycle(pattern):
+    parsed_pattern = parse(pattern)
+    while True:
+        for e in xtraverse(parsed_pattern):
+            yield e
 
 
 class AbstractPattern(ABC):
@@ -44,8 +49,8 @@ class AbstractPattern(ABC):
 
 class Pattern(AbstractPattern):
 
-    def __init__(self, pattern):
-        self.pattern = pattern if isinstance(pattern, list) else [pattern]
+    def __init__(self, *pattern):
+        self.pattern = pattern
         self.cycle = recursive_cycle(self.pattern)
 
     def __next__(self):
@@ -55,6 +60,8 @@ class Pattern(AbstractPattern):
         return Pattern(self.pattern)
 
     def __repr__(self):
+        if len(self.pattern) == 1:
+            return f'P({self.pattern[0]})'
         return f'P{self.pattern}'
 
 
@@ -72,16 +79,4 @@ class PatternOperation(AbstractPattern):
         return f'{self.p1} + {self.p2}'
 
 
-class PatternFactory(object):
-
-    def __getitem__(self, item):
-        if isinstance(item, tuple):
-            item = list(item)
-        return Pattern(item)
-
-
-P = PatternFactory()
-
-if __name__ == '__main__':
-    p = P[0, (1, 2), {1, 3}]
-    print([next(p) for _ in range(10)])
+P = Pattern
