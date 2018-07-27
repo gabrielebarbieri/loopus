@@ -16,8 +16,11 @@ class Player(Loop):
         self.scale = scale
         super(Player, self).__init__(clock, durations=dur, actions=None)
 
+    def get_pitch(self, degree):
+        return self.scale[degree].midi
+
     def play_note(self, beat, degree, dur=1.0, vel=100):
-        pitch = self.scale[degree].midi
+        pitch = self.get_pitch(degree)
         note = Note(pitch, channel=self.channel)
         self.clock.schedule(beat, note.play, vel)
         self.clock.schedule(beat + dur, note.release)
