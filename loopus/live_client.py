@@ -1,7 +1,34 @@
 from pythonosc import udp_client
+from pythonosc import dispatcher, osc_server
+import threading
+from queue import Queue
 
 
 client = udp_client.SimpleUDPClient('127.0.0.1', 9001)
+
+
+class Receiver(object):
+
+    def __init__(self):
+        self.dispatcher = dispatcher.Dispatcher()
+        # self.dispatcher.set_default_handler(print)
+        self.dispatcher.map('/live/clip/loopjump', self.receive)
+        self.server = osc_server.ThreadingOSCUDPServer(('127.0.0.1', 9000), self.dispatcher)
+        self.q = Queue()
+
+    def receive(self, *args):
+        self.q.put(args)
+
+    def run_server(self):
+        t = threading.Thread(target=self.server.serve_forever)
+        t.start()
+
+    def stop_server(self):
+        self.server.shutdown()
+
+
+receiver = Receiver()
+receiver.run_server()
 
 
 class Note(object):
@@ -55,11 +82,43 @@ if __name__ == "__main__":
 
     c = Clip(1, 0)
     c.play()
-    c.set_notes(notes)
-    # input('play any key to stop')
-    c.stop()
+    import time
+    time.sleep(0.1)
 
-    # client.send_message('/live/browser/list', 'query')
+    client.send_message('/live/clip/loopjump', [1, 1])
+
+
+    input('hello')
+    #
+    # Clip(1, 1).play()
+    # print(receiver.q.get())
+    # Clip(1, 0).play()
+    # print(receiver.q.get())
+    # Clip(1, 1).play()
+    # print(receiver.q.get())
+    # Clip(1, 0).play()
+    # print(receiver.q.get())
+    # Clip(1, 1).play()
+    # print(receiver.q.get())
+
+
+
+
+    # c = Clip(0, 0)
+    # c.play()
+    # import time
+    # time.sleep(0.1)
+    # c = Clip(1, 1)
+    # c.play()
+
+
+
+    # c.set_notes(notes)
+    # input('play any key to stop')
+    # c.stop()
+
+    client.send_message('/live/stop', 'query')
+    receiver.stop_server()
 
     # c.stop()
     # client.send_message("/live/clip/stop", [1, 0])
