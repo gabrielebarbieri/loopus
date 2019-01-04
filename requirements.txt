@@ -1,3 +1,4 @@
+python-osc
 mido
 music21
 -e git+git@github.com:gabrielebarbieri/abletonlink.git#egg=abletonlink
