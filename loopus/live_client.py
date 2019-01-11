@@ -2,25 +2,18 @@ from pythonosc import udp_client
 from pythonosc import dispatcher, osc_server
 import threading
 from queue import Queue
-
+import time
 
 client = udp_client.SimpleUDPClient('127.0.0.1', 9001)
 
 
 class Receiver(object):
 
-    def __init__(self):
+    def __init__(self, verbose=False):
         self.dispatcher = dispatcher.Dispatcher()
-        # self.dispatcher.set_default_handler(print)
-        self.dispatcher.map('/live/clip/state', self.receive)
+        if verbose:
+            self.dispatcher.set_default_handler(print)
         self.server = osc_server.ThreadingOSCUDPServer(('127.0.0.1', 9000), self.dispatcher)
-        self.q = Queue()
-
-    def receive(self, *args):
-        print(*args)
-        state = args[3]
-        if state == 2: # clip is_playing
-            self.q.put(args)
 
     def run_server(self):
         t = threading.Thread(target=self.server.serve_forever)
@@ -30,7 +23,7 @@ class Receiver(object):
         self.server.shutdown()
 
 
-receiver = Receiver()
+receiver = Receiver(True)
 
 
 class Note(object):
@@ -72,38 +65,64 @@ class Clip(object):
 
     def set_notes(self, notes):
         msg = sum((n.osc_value for n in notes), self.osc_value)
-        print(msg)
         client.send_message('/live/clip/notes/set', msg)
         pass
 
 
-def create_clip(track, scene, notes, length):
-    client.send_message('/live/clip/delete', [track, scene])
-    client.send_message('/live/clip/create', [track, scene, length])
-    c = Clip(track, scene)
-    c.set_notes(notes)
-    c.play()
+class Track(object):
+
+    def __init__(self, track_id, receiver):
+
+        self.track_id = track_id
+        self.clips = []
+        self.receiver = receiver
+        self.receiver.dispatcher.map('/live/track/state', self.clip_changed)
+        self.q = Queue()
+
+    def clip_changed(self, *args):
+        print(args)
+        track_id = args[1]
+        if track_id == self.track_id:
+            self.q.put(args)
+
+    def create_clip(self, notes, length):
+        scene = len(self.clips)
+        client.send_message('/live/clip/delete', [self.track_id, scene])
+        client.send_message('/live/clip/create', [self.track_id, scene, length])
+        c = Clip(self.track_id, scene)
+        c.set_notes(notes)
+        self.clips.append(c)
+        time.sleep(0.1)
+        c.play()
+
+    def _play(self, loop_iterator):
+        for loop in loop_iterator:
+            self.create_clip(loop, 4)
+            print(self.q.get())
+        self.clips[-1].stop()
+
+    def play(self, loop_iterator):
+        t = threading.Thread(target=self._play, args=(loop_iterator,))
+        t.start()
 
 
 if __name__ == "__main__":
 
     receiver.run_server()
 
-    def get_notes(bass):
-        notes = [Note(p, i, 1.) for i, p in enumerate([55, 55, 57, 59])]
-        for i in range(4):
-            notes.append(Note(bass - 12, i+0.5, 1))
-        return notes
+    client.send_message('/live/play', 'query')
 
-    basses = [52, 50, 48, 48, 48]
+    def get_bass(bass):
+        return [Note(bass - 12, i+0.5, 1) for i in range(4)]
 
-    def play(clip=0):
-        create_clip(0, clip, get_notes(basses[clip]), 4)
-        print(receiver.q.get())
-        if clip + 1 < len(basses):
-            play(clip+1)
 
-    play()
+    notes = [Note(p, i, 1.) for i, p in enumerate([55, 55, 57, 59])]
 
+    basses = [52, 50, 48, 48]
+    # receiver.dispatcher.set_default_handler(print)
+    Track(0, receiver).play([notes] * 4)
+    Track(1, receiver).play(get_bass(bass) for bass in basses)
+    input()
     client.send_message('/live/stop', 'query')
     receiver.stop_server()
+

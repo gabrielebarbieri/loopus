@@ -12,7 +12,8 @@ if __name__ == "__main__":
             print()
 
     dispatcher = dispatcher.Dispatcher()
-    dispatcher.map('/live/clip/state', print)
+    dispatcher.set_default_handler(print)
+    # dispatcher.map('/live/clip/state', print)
 
     server = osc_server.ThreadingOSCUDPServer((ip, 9000), dispatcher)
     print("Serving on {}".format(server.server_address))
