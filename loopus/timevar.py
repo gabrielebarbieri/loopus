@@ -1,5 +1,5 @@
 from loopus.loop import Loop
-from loopus.pattern import Pattern
+from loopus.foxdot_pattern import Pattern
 
 
 class TimeVar(Loop):

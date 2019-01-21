@@ -1,4 +1,3 @@
-from loopus.player import Player
 from music21.pitch import Pitch
 
 

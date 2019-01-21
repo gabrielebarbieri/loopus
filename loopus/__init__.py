@@ -1,4 +1,4 @@
-from loopus.pattern import P, Pattern
+from loopus.foxdot_pattern import P, Pattern
 
 
 # import signal
