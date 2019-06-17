@@ -6,7 +6,7 @@ TICKS = 480
 
 class Loopus:
 
-    def __init__(self, host='127.0.0.1', in_port=9000, out_port=9002, verbose=False):
+    def __init__(self, host='127.0.0.1', in_port=9000, out_port=9001, verbose=False):
         self.dispatcher = dispatcher.Dispatcher()
         if verbose:
             self.dispatcher.set_default_handler(print)
@@ -14,8 +14,10 @@ class Loopus:
         self.sender = udp_client.SimpleUDPClient(host, out_port)
         self._bar = -1
         self._time_signature = (4,4)
+        self._callbacks = {}
         self.dispatcher.map('/bar', self.set_bar)
         self.dispatcher.map('/ts', self.set_time_signature)
+        self.dispatcher.map('/callback', self.execute_callback)
         self.start()
 
     def start(self):
@@ -50,22 +52,38 @@ class Loopus:
     def beat_unit(self):
         return self._time_signature[1]
 
-    def play(self, pitch, vel=100, dur=1.0, delay=0):
-        when = (self.next_bar * self.beat_per_bar) + delay
+    def play(self, when, pitch, vel=100, dur=1.0):
         self.sender.send_message('/seq', [when, 'play', pitch, vel, int(dur*TICKS)])
+
+    def callback(self, when, func, *args):
+        callback = (func, args)
+        callback_id = str(id(callback))
+        self._callbacks[callback_id] = callback
+        self.sender.send_message('/seq', [when, 'callback', callback_id])
+
+    def execute_callback(self, *args):
+        callback = self._callbacks[args[1]]
+        func = callback[0]
+        c_args = callback[1]
+        func(*c_args)
 
 
 if __name__ == '__main__':
     L = Loopus(verbose=True)
 
+    def loop(beat):
+        L.play(beat, 60, 80, 0.5)
+        L.play(beat + 1, 62, 120)
+        L.callback(beat + 1.9, loop, beat + 2)
+
+
     key = input()
     while key != 'q':
-        print(L.time_signature)
+        if key == 'c':
+            L.callback(L.next_bar * L.beat_per_bar, sum, 12, 13)
         try:
             d = int(key)
-            for i in range(8):
-                L.play(60, 80, 0.5, delay=2*i)
-                L.play(62, 120, delay=2*i+ 1)
+            loop(L.next_bar * L.beat_per_bar)
         except:
             L.sender.send_message('/hello', 'world')
 
