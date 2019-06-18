@@ -1,0 +1,90 @@
+;; Extempore transcription of this performance:
+;; Andrew Sorensen Keynote: "The Concert Programmer" - OSCON 2014
+;; https://www.youtube.com/watch?v=yY1FSsUV-8c
+
+
+(sys:load "libs/external/instruments_ext.xtm")
+; (sys:load "libs/core/instruments.xtm")
+
+(bind-sampler sampler sampler_note_hermite_c sampler_fx)
+(bind-sampler sampler2 sampler_note_hermite_c sampler_fx)
+(bind-instrument fmsynth fmsynth_note_c fmsynth_fx)
+
+(bind-func dsp:DSP
+  (lambda (in time chan dat)
+    (cond ((< chan 2)
+           (+(* 1.0 (fmsynth in time chan dat))
+             (* 7.0 (sampler2 in time chan dat))
+             (* 3.0 (sampler in time chan dat))))
+	  (else 0.0))))
+
+(dsp:set! dsp)
+
+(load-sampler sampler "assets/samples/piano/")
+(load-sampler sampler2 "assets/samples/808/")
+
+
+
+(define root 52)
+(define scale (pc:scale 4 'aeolian))
+
+
+(define left-hand
+  (lambda (beat ps ds)
+    (if (= 0 (modulo beat 8))
+      (set! root (random (remove root (list 52 50 48)))))
+      ; (set! root (random (remove root (list 48 43)))))
+
+
+    (play sampler (car ps) 80 (car ds))
+    (play 1/2 sampler root 80 (car ds))
+    (callback (*metro* (+ beat (* .5 (car ds)))) 'left-hand (+ beat (car ds))
+              (rotate ps -1)
+              (rotate ds -1))))
+
+(left-hand (*metro* 'get-beat 4) (list 55 55 57 59) (list 1))
+
+
+
+(define right-hand
+  (lambda (beat dur)
+    (play sampler
+          (pc:quantize (cosr (+ root 24) (cosr 5 3 1/2) 7/3) scale)
+          (cosr 80 20 7/3)
+          (* 2.0 dur))
+    (if (> (random) .6)
+      (play fmsynth
+          (pc:quantize (+ 7 (cosr (+ root 24) (cosr 5 3 1/2) 7/3)) scale)
+          ; (pc:quantize (+ 12 (cosr (+ root 24) (cosr 5 3 1/2) 7/3)) scale)
+          (cosr 80 20 7/3)
+          (* 2.0 dur) 0.5 5.0))
+
+    (callback (*metro* (+ beat (* .5 dur))) 'right-hand (+ beat dur) dur)))
+
+(right-hand (*metro* 'get-beat 4) 1/4)
+
+(define bassline
+  (lambda (beat ps ds)
+    (play fmsynth root 80 (* (car ps) (car ds)) 1.0 0.5)
+    (callback (*metro* (+ beat (* .95 (car ds)))) 'bassline (+ beat (car ds))
+              (rotate ps -1)
+              (rotate ds -1))))
+
+(bassline (*metro* 'get-beat 4) (list 0.25 0.25 0.6) '(3/2 1 3/2))
+
+
+(define kick
+  (lambda (beat dur)
+    (play sampler2 35 110 dur)
+    (play -1/4 sampler2 35 80 (* .5 dur))
+    (callback (*metro* (+ beat (* .5 dur))) 'kick (+ beat dur) dur)))
+
+(kick (*metro* 'get-beat 4) 1)
+
+
+(define hats
+  (lambda (beat dur)
+    (play sampler2 (random '(44 42)) (cosr 60 50 (random '(7/3 5/2))) dur)
+    (callback (*metro* (+ beat (* .5 dur))) 'hats (+ beat dur) dur)))
+
+(hats (*metro* 'get-beat 4) 1/4)
